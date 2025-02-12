@@ -1,54 +1,71 @@
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Type where
 
-import Prelude hiding (subtract, even, flip, repeat, Integer)
-import Data.Set (Set)
+import Prelude hiding (Integer)
 
+import qualified Data.Set as Set
+import GHC.Generics (Generic)
+
+-- Boolean corresponds to Python's bool.
 type Boolean = Bool
+
+-- For Integer we choose Haskell's Int (note: Haskell also has an unbounded Integer type).
 type Integer = Int
+
+-- A tuple of two Integers.
 type IntegerTuple = (Integer, Integer)
 
-data Numerical = Single Integer | Pair IntegerTuple
-  deriving (Show, Eq)
+-- A Numerical is either an Integer or an IntegerTuple.
+data Numerical
+  = NumInteger Integer
+  | NumTuple IntegerTuple
+  deriving (Show, Eq, Ord, Generic)
 
-type IntegerSet = Set Integer
+-- An IntegerSet is a (frozen) set of Integers.
+type IntegerSet = Set.Set Integer
 
--- Grid is represented as a list of lists of Integers (instead of a tuple of tuples)
+-- A Grid is a tuple of tuples of Integer.
+-- In Haskell we use a list of lists to represent a 2D immutable structure.
 type Grid = [[Integer]]
 
--- A Cell is a tuple of an Integer and an IntegerTuple.
+-- A Cell is a tuple where the first element is an Integer and
+-- the second element is an IntegerTuple.
 type Cell = (Integer, IntegerTuple)
 
--- An Object is an immutable set of Cells.
-type Object = Set Cell
+-- An Object is a frozen set of Cells.
+type Object = Set.Set Cell
 
--- Objects is a set of Object.
-type Objects = Set Object
+-- Objects is a frozen set of Object.
+type Objects = Set.Set Object
 
--- Indices is an immutable set of IntegerTuple.
-type Indices = Set IntegerTuple
+-- Indices is a frozen set of IntegerTuple.
+type Indices = Set.Set IntegerTuple
 
--- IndicesSet is an immutable set of Indices.
-type IndicesSet = Set Indices
+-- IndicesSet is a frozen set of Indices.
+type IndicesSet = Set.Set Indices
 
 -- A Patch is either an Object or a set of Indices.
-data Patch = Obj Object | Ind Indices
-  deriving (Show, Eq)
+data Patch
+  = PatchObject Object
+  | PatchIndices Indices
+  deriving (Show, Eq, Ord, Generic)
 
 -- An Element is either an Object or a Grid.
-data Element = ElemObject Object | ElemGrid Grid
-  deriving (Show, Eq)
+data Element
+  = ElementObject Object
+  | ElementGrid Grid
+  deriving (Show, Eq, Ord, Generic)
 
 -- A Piece is either a Grid or a Patch.
-data Piece = PGrid Grid | PPatch Patch
-  deriving (Show, Eq)
+data Piece
+  = PieceGrid Grid
+  | PiecePatch Patch
+  deriving (Show, Eq, Ord, Generic)
 
--- TupleTuple is translated as a list of lists of Integers.
-type TupleTuple = [[Integer]]
+-- TupleTuple is meant to be a tuple of tuples.
+-- In Haskell we define a generic alias for a nested list structure.
+type TupleTuple a = [[a]]
 
--- A container of containers (we use lists here)
+-- ContainerContainer is similarly a container (e.g. list) of containers.
 type ContainerContainer a = [[a]]
-
-
