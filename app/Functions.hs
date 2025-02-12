@@ -1,0 +1,280 @@
+module Functions where
+
+import Data.List (sortBy, maximumBy, minimumBy, nub, delete)
+import Data.Function (on)
+import Data.Ord (comparing)
+import Data.Set (Set, fromList)
+import Prelude hiding (subtract, even, flip, repeat, Integer)
+import qualified Prelude as Prelude
+import Type
+import qualified Data.Set as Set
+
+-- identity: returns its argument
+identity :: a -> a
+identity x = x
+
+-- add: perform addition on Numerical types by pattern matching on the constructors.
+add :: Numerical -> Numerical -> Numerical
+add (Single a) (Single b)             = Single (a + b)
+add (Pair (a1, a2)) (Pair (b1, b2))     = Pair (a1 + b1, a2 + b2)
+add (Single a) (Pair (b1, b2))          = Pair (a + b1, a + b2)
+add (Pair (a1, a2)) (Single b)          = Pair (a1 + b, a2 + b)
+
+-- subtract: perform subtraction on Numerical types.
+subtract :: Numerical -> Numerical -> Numerical
+subtract (Single a) (Single b)             = Single (a - b)
+subtract (Pair (a1, a2)) (Pair (b1, b2))     = Pair (a1 - b1, a2 - b2)
+subtract (Single a) (Pair (b1, b2))          = Pair (a - b1, a - b2)
+subtract (Pair (a1, a2)) (Single b)          = Pair (a1 - b, a2 - b)
+
+-- multiply: perform multiplication on Numerical types.
+multiply :: Numerical -> Numerical -> Numerical
+multiply (Single a) (Single b)             = Single (a * b)
+multiply (Pair (a1, a2)) (Pair (b1, b2))     = Pair (a1 * b1, a2 * b2)
+multiply (Single a) (Pair (b1, b2))          = Pair (a * b1, a * b2)
+multiply (Pair (a1, a2)) (Single b)          = Pair (a1 * b, a2 * b)
+
+-- divide: perform floor division on Numerical types.
+divide :: Numerical -> Numerical -> Numerical
+divide (Single a) (Single b)             = Single (a `div` b)
+divide (Pair (a1, a2)) (Pair (b1, b2))     = Pair (a1 `div` b1, a2 `div` b2)
+divide (Single a) (Pair (b1, b2))          = Pair (a `div` b1, a `div` b2)
+divide (Pair (a1, a2)) (Single b)          = Pair (a1 `div` b, a2 `div` b)
+
+-- invert: returns the additive inverse of a Numerical value.
+invert :: Numerical -> Numerical
+invert (Single n)      = Single (-n)
+invert (Pair (n1,n2))  = Pair (-n1, -n2)
+
+-- even: checks if an Integer is even.
+even :: Integer -> Boolean
+even n = n `mod` 2 == 0
+
+-- double: scales a Numerical value by 2.
+double :: Numerical -> Numerical
+double (Single n)      = Single (n * 2)
+double (Pair (n1, n2)) = Pair (n1 * 2, n2 * 2)
+
+-- halve: scales a Numerical value by one half (using floor division).
+halve :: Numerical -> Numerical
+halve (Single n)      = Single (n `div` 2)
+halve (Pair (n1, n2)) = Pair (n1 `div` 2, n2 `div` 2)
+
+-- flip: logical negation.
+flip :: Boolean -> Boolean
+flip b = not b
+
+-- equality: checks equality between two values.
+equality :: Eq a => a -> a -> Boolean
+equality a b = a == b
+
+-- contained: tests membership of a value in a container.
+contained :: (Foldable t, Eq a) => a -> t a -> Boolean
+contained value container = value `elem` container
+
+-- combine: returns the union (concatenation) of two containers (here, lists).
+combine :: [a] -> [a] -> [a]
+combine a b = a ++ b
+
+-- intersection: returns the intersection of two sets.
+intersection :: Ord a => Set a -> Set a -> Set a
+intersection a b = Set.intersection a b
+
+-- difference: returns the set difference.
+difference :: Ord a => Set a -> Set a -> Set a
+difference a b = Set.difference a b
+
+-- dedupe: removes duplicate elements from a tuple (represented here as a list).
+dedupe :: Eq a => [a] -> [a]
+dedupe []     = []
+dedupe (x:xs) = x : dedupe (filter (/= x) xs)
+
+-- order: orders a container (list) by a custom key function.
+order :: Ord b => (a -> b) -> [a] -> [a]
+order compfunc container = sortBy (comparing compfunc) container
+
+-- repeat: creates a list by repeating an item a given number of times.
+repeat :: a -> Integer -> [a]
+repeat item num = replicate num item
+
+-- greater: checks if one Integer is greater than another.
+greater :: Integer -> Integer -> Boolean
+greater a b = a > b
+
+-- size: returns the cardinality of a container (list).
+size :: [a] -> Integer
+size container = length container
+
+-- merge: merges a container of containers (a list of lists) into a single container.
+merge :: [[a]] -> [a]
+merge containers = concat containers
+
+maximum :: IntegerSet -> Integer
+maximum container = if null container then 0 else maximum' container
+  where
+    maximum' :: IntegerSet -> Integer
+    maximum' = foldr max 0
+
+minimum :: IntegerSet -> Integer
+minimum container = if null container then 0 else minimum' container
+  where
+    minimum' :: IntegerSet -> Integer
+    minimum' = foldr min 0
+
+valmax :: [a] -> (a -> Integer) -> Integer
+valmax [] _ = 0
+valmax container compfunc = compfunc $ maximumBy (comparing compfunc) container
+
+valmin :: [a] -> (a -> Integer) -> Integer
+valmin [] _ = 0
+valmin container compfunc = compfunc $ minimumBy (comparing compfunc) container
+
+argmax :: (Ord b) => [a] -> (a -> b) -> a
+argmax container compfunc = maximumBy (comparing compfunc) container
+
+argmin :: (Ord b) => [a] -> (a -> b) -> a
+argmin container compfunc = minimumBy (comparing compfunc) container
+
+mostcommon :: (Eq a) => [a] -> a
+mostcommon container = maximumBy (compare `on` count container) (uniqueElements container)
+  where
+    count list x = length $ filter (== x) list
+    uniqueElements = Data.List.nub
+
+leastcommon :: (Eq a) => [a] -> a
+leastcommon container = minimumBy (compare `on` count container) (uniqueElements container)
+  where
+    count list x = length $ filter (== x) list
+    uniqueElements = Data.List.nub
+
+initset :: a -> Set a
+initset value = Set.singleton value
+
+both :: Boolean -> Boolean -> Boolean
+both a b = a && b
+
+either :: Boolean -> Boolean -> Boolean
+either a b = a || b
+
+increment :: Numerical -> Numerical
+increment (Single a) = Single(a + 1)
+increment (Pair (a1 , a2)) = Pair(a1 + 1, a2 + 2)
+
+decrement :: Numerical -> Numerical
+decrement (Single a) = Single(a - 1)
+decrement (Pair (a1 , a2)) = Pair(a1 - 1, a2 - 2)
+
+crement :: Numerical -> Numerical
+crement (Single x) =
+    Single $ if x == 0
+            then 0
+            else if x > 0
+                 then x + 1
+                 else x - 1
+crement (Pair (x, y)) =
+    Pair ( if x == 0
+           then 0
+           else if x > 0
+                then x + 1
+                else x - 1
+         , if y == 0
+           then 0
+           else if y > 0
+                then y + 1
+                else y - 1
+         )
+
+sign :: Numerical -> Numerical
+sign (Single x) = Single (if x == 0 then 0 else if x > 0 then 1 else -1)
+sign (Pair (x, y)) = Pair (
+    if x == 0 then 0 else if x > 0 then 1 else -1,
+    if y == 0 then 0 else if y > 0 then 1 else -1)
+
+positive :: Integer -> Boolean
+positive x = x > 0
+
+toivec :: Integer -> IntegerTuple
+toivec i = (i, 0)
+
+tojvec :: Integer -> IntegerTuple
+tojvec j = (0, j)
+
+sfilter :: [a] -> (a -> Bool) -> [a]
+sfilter container condition = filter condition container
+
+mfilter :: (Ord a) => [a] -> (a -> Boolean) -> Set a
+mfilter container function = Set.fromList (sfilter container function)
+
+extract :: [a] -> (a -> Bool) -> a
+extract container condition = head $ filter condition container
+
+toTuple :: Set a -> [a]
+toTuple = Set.toList
+
+first :: (Foldable t) => t a -> a
+first = head . foldr (:) []
+
+last :: [a] -> a
+last []     = error "Empty list"
+last [x]    = x
+last (_:xs) = Functions.last xs
+
+insert :: Ord a => a -> Set.Set a -> Set.Set a
+insert value container = Set.insert value container
+
+remove :: Eq a => a -> [a] -> [a]
+remove value container = filter (/= value) container
+
+other :: (Eq a) => [a] -> a -> a
+other container value = head (delete value container)
+
+interval :: Integer -> Integer -> Integer -> TupleTuple
+interval start stop step = [[x] | x <- [start, start + step .. stop - 1]]
+
+astuple :: Integer -> Integer -> IntegerTuple
+astuple a b = (a,b)
+
+product :: (Ord a, Ord b) => [a] -> [b] -> Set (a, b)
+product a b = fromList [(i, j) | j <- b, i <- a]
+
+pair :: [Integer] -> [Integer] -> TupleTuple
+pair a b = [[x,y] | (x,y) <- zip a b]
+
+branch :: Boolean -> a -> a -> a
+branch condition a b = if condition then a else b
+
+compose :: (a -> b) -> (c -> a) -> (c -> b)
+compose outer inner = outer . inner
+
+chain :: (a -> b) -> (b -> c) -> (c -> d) -> (a -> d)
+chain f g h = h . g . f
+
+matcher :: (Eq a, Eq b) => (a -> b) -> b -> (a -> Bool)
+matcher function target = \x -> function x == target
+
+rbind :: (a -> b -> c) -> b -> (a -> c)
+rbind function fixed = \x -> function x fixed
+
+lbind :: (a -> r) -> a -> r
+lbind f x = f x
+
+power :: (Element -> Element) -> Integer -> (Element -> Element)
+power function n
+    | n == 1 = function
+    | otherwise = compose function (power function (n - 1))
+
+fork :: (a -> b -> c) -> (d -> a) -> (d -> b) -> (d -> c)
+fork outer a b = \x -> outer (a x) (b x)
+
+apply :: (a -> b) -> [a] -> [b]
+apply function container = map function container
+
+rapply :: [a -> b] -> a -> [b]
+rapply functions value = map (\f -> f value) functions
+
+-- mapply :: (a -> Object) -> ContainerContainer a -> Object
+-- mapply function container = merge (map function (concat container))
+
+hconcat :: Grid -> Grid -> Grid
+hconcat a b = zipWith (++) a b
+
